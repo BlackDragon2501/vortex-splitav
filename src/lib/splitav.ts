@@ -92,9 +92,11 @@ export async function ensureFFmpeg(): Promise<FfmpegLike> {
   if (!scriptLoaded) {
     await new Promise<void>((resolve, reject) => {
       const s = document.createElement('script')
-      s.src = '/ffmpeg/ffmpeg.js'
+      // Motor FFmpeg servido desde el CDN de jsDelivr (el wasm vendido pesaba >25MiB,
+      // por encima del limite por archivo de Cloudflare Pages). Mismos bytes, version fijada.
+      s.src = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js'
       s.onload = () => resolve()
-      s.onerror = () => reject(new Error('No pude cargar el motor FFmpeg local'))
+      s.onerror = () => reject(new Error('No pude cargar el motor FFmpeg desde el CDN'))
       document.head.appendChild(s)
     })
     scriptLoaded = true
@@ -103,8 +105,8 @@ export async function ensureFFmpeg(): Promise<FfmpegLike> {
   FF.on('log', (e) => handlers.log?.(e.message))
   FF.on('progress', (e) => handlers.progress?.(e.progress))
   await FF.load({
-    coreURL: '/ffmpeg/ffmpeg-core.js',
-    wasmURL: '/ffmpeg/ffmpeg-core.wasm',
+    coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js',
+    wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm',
   })
   instance = FF
   return FF
